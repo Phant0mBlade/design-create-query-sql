@@ -3,14 +3,14 @@
 
 - Uncomment and use below DROP statement if you need start from the start
 - DROP DATABASE SocialEvents;
-```
+```sql
 CREATE DATABASE SocialEvents;
 Use SocialEvents;
 ```
 
 ### Students Table: CREATE AND INSERT
 
-```
+```sql
 CREATE TABLE Students (
     stud_id VARCHAR(20) UNIQUE PRIMARY KEY,
     stud_email VARCHAR(50) UNIQUE NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE Students (
 );
 ```
 - Add some sample data
-```
+```sql
 INSERT INTO Students (stud_id, stud_email, stud_name, stud_phone) VALUES
     ("STUD000023457", "STUD000023457@swansea.ac.uk", "Mayank Purwaar", "9876543211"),
     ("STUD000023456", "STUD000023456@swansea.ac.uk", "Praveen Singh", "9876543210"),
@@ -33,7 +33,7 @@ INSERT INTO Students (stud_id, stud_email, stud_name, stud_phone) VALUES
 ```
 
 ### Organiser Table: CREATE AND INSERT
-```
+```sql
 CREATE TABLE Organiser (
     organiser_id VARCHAR(20) UNIQUE PRIMARY KEY,
     organiser VARCHAR(50) UNIQUE NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE Organiser (
 );
 ```
 - ALTER TABLE Organiser ADD PRIMARY KEY (organiser_id);
-```
+```sql
 INSERT INTO Organiser (organiser_id, organiser, organiser_email, organiser_phone) VALUES
     ("ORG000023456", "Sports Club", "ORG000023456@swansea.ac.uk", "09876543210"),
     ("ORG000023457", "Swansea Cricket Club", "ORG000023457@swansea.ac.uk", "09876543211"),
@@ -52,7 +52,7 @@ INSERT INTO Organiser (organiser_id, organiser, organiser_email, organiser_phone
 ```
 
 ### Location Table: CREATE AND INSERT
-```
+```sql
 CREATE TABLE Location (
     loc_id SERIAL PRIMARY KEY,
     loc_address VARCHAR(200) UNIQUE NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE Location (
     loc_gmap_link VARCHAR(5000)
 );
 ```
-```
+```sql
 INSERT INTO Location (loc_address, loc_zip, loc_gmap_link)
 VALUES
     ("Cricket Club, Bay Sports Park", "SA1 8EN", "https://www.google.com/maps/place/Bay+Sports+Centre/@51.6187179,-3.8821509,19z/data=!4m6!3m5!1s0x486e6077db135999:0x6f4fed9b36232128!8m2!3d51.6188405!4d-3.8817693!16s%2Fg%2F11cmdgvqys?entry=ttu"),
@@ -74,7 +74,7 @@ VALUES
 
 ### Event Table: CREATE AND INSERT
 - This tables is important as any event created will have an organiser and a location. And these attributes need to already exist any event cannot have imaginary location and organiser. So we add these attributes as "Foreign Key"
-```
+```sql
 CREATE TABLE Event (
     event_id SERIAL PRIMARY KEY,
     event_name VARCHAR(50) NOT NULL,
@@ -87,12 +87,12 @@ CREATE TABLE Event (
 );
 ```
 - Constraint to not let the location be double booked
-```
+```sql
 ALTER TABLE Event ADD UNIQUE KEY loc_available(event_date, event_loc);
 ```
 
 - Let organisers CREATE new event
-```
+```sql
 INSERT INTO Event(event_name, event_date, event_type, event_organiser, event_loc)
 VALUES
     ("Cricket Trials", "2023-11-30 11:00:00", "Sports", "ORG000023457", 1),
@@ -111,14 +111,14 @@ VALUES
 ```
 
 - INSERT query to demonstrate that 2 events cannot take place at the same time and at the same place
-```
+```sql
 INSERT INTO Event (event_name, event_date, event_type, event_organiser, event_loc)
 VALUES  ("Event same time & place", "2023-11-30 11:00:00", "Some Event", "ORG000023459", 1);
 ```
 
 ### Registration Table: CREATE
 
-```
+```sql
 CREATE TABLE Registration (
     student_reg_date DATETIME,
     student_rating DECIMAL DEFAULT 0 NOT NULL,
@@ -129,11 +129,11 @@ CREATE TABLE Registration (
 );
 ```
 - Primary key as combination of stud_id and event_id. A student should only registers once for any event
-```
+```sql
 ALTER TABLE Registration ADD PRIMARY KEY (stud_id, event_id);
 ```
 - Rating should be within some range. Else impractical values may be submitted for rating any event.
-```
+```sql
 ALTER TABLE Registration ADD CHECK (student_rating <= 5.0 AND student_rating >= 0.0);
 ```
 
@@ -144,7 +144,7 @@ ALTER TABLE Registration ADD CHECK (student_rating <= 5.0 AND student_rating >= 
 <!-- INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 VALUES (NOW(), "STUD000023456", "01", (SELECT 0 FROM Event WHERE event_id = "01" AND event_date > NOW())); -->
 <!-- -- Since I do not know when will this will be checked and marked the followig query use exact datetime instead of NOW() as in above. -->
-```
+```sql
 INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 VALUES (NOW(), "STUD000023457", "01", (SELECT 0 FROM Event WHERE event_id = "01" AND event_date > NOW())),
       (NOW(), "STUD000023457", "02", (SELECT 0 FROM Event WHERE event_id = "02" AND event_date > NOW())),
@@ -170,7 +170,7 @@ VALUES (NOW(), "STUD000023457", "01", (SELECT 0 FROM Event WHERE event_id = "01"
 VALUES ("2023-11-21 22:12:34", "STUD000023462", "07", (SELECT 0 FROM Event WHERE event_id = "07" AND event_date > "2023-11-21 22:12:34")); -->
 
 - A student can try to register after the event is over, for this following query will give error, kindly uncomment query to run.
-```
+```sql
 -- INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 -- VALUES ("2023-12-30 22:12:34", "STUD000023460", "09", (SELECT 0 FROM Event WHERE event_id = "09" AND event_date > "2023-12-30 22:12:34"));
 ```
@@ -179,7 +179,7 @@ VALUES ("2023-11-21 22:12:34", "STUD000023462", "07", (SELECT 0 FROM Event WHERE
 
 - Student can only rate events for which they have registered before the event date
 
-```
+```sql
 UPDATE Registration, Event
 SET student_rating=4
 WHERE
@@ -265,12 +265,12 @@ WHERE
 - These views are going to simplify my queries a lot in later query section.
 - Plus creating these views also restrict access to data as needed.
 
-```
+```sql
 CREATE VIEW AvgEventRating
 AS
     SELECT event_id, AVG(student_rating) AS event_rating FROM Registration GROUP BY event_id;
 ```
-```
+```sql
 CREATE VIEW EventLoc
 AS
     SELECT event_name, event_date, event_type, event_organiser, L.loc_address AS event_location, event_id
