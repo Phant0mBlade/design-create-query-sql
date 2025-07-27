@@ -1,6 +1,3 @@
-# Design Create Query
-
-This is part of my academic course work.
 
 ## Task
 
