@@ -8,12 +8,14 @@ Certain design choices I made while creating the database
 
 We need a database where "students", can attend "events", organiser will organise "events", "events" will be organised at some "place". "students" will be registering to these events so we will require the registration details and confirmation to students.
 
-### Tables
+### Schema
 
 Based on the details in the [problem statement](problem-statement.md) and the simplification above, the tables we will need will be,
 
 1. Students - to store details of the students, so that they can register for events and get confirmation and location details of these events
   - student name, id, email and phone. To have students register and update about events
+
+
 2. Organiser - the details of organiser, which will create events
   - organiser name, id, phone and email, similar to students
 3. Events - actual events created
@@ -26,19 +28,19 @@ Based on the details in the [problem statement](problem-statement.md) and the si
   - student registration date, student rating, ForeignKey(student id), ForeignKey(event id)
   - PrimaryKey(stud id, event id) - an event is registered for by a student
 
-## DB Contraints
+### DB Contraints
 
 So far we have the tables, there attributes but we also need to discuss there constraints and dependancy(though we showed some already above).
 
 Students table have no contraint. We can have email id and phone number regex on these attributes. So any student that gets added to this database have a valid email and phone. Similary of Organiser table.
 
-Location also do not have any constraint. As we find any venue where these events can be held, we continue to add them in our databse. location id will be primary key with SERIAL
+Location also do not have any constraint. As we find any venue where these events can be held, we continue to add them in our databse. location id will be primary key with SERIAL as data type
 
-Events have contraints. It can only exist if an organiser and a location exist. So we add organiser id and the location id as the foreign key contraint to this table. event id will be primary key with SERIAL. I also decided that any event venue/location cannot be double booked. For that we add a unique key contraint for event location and event date.
+Events have contraints. It can only exist if an organiser and a location exist. So we add organiser id and the location id as the foreign key contraint to this table. event id will be primary key with SERIAL as data type. I also decided that any event venue/location cannot be double booked. For that we add a unique key contraint for event location and event date.
 
 Registration too only exist if a student and an event exist. Without those registration has no meaning. So we also have student id and event id as the foreign key in this table. Event rating within some range
 
-## Some SQL constraints
+### Some SQL constraints
 
 While updating we need to make sure we follow some contraints.
 For example
@@ -47,21 +49,50 @@ For example
 
 These contraints will be reflected in our update statements.
 
-## What else?
+### What else?
 
-I created couple of views to help me with generating reports and metrics for these events. Primary reason to create these views was to simplify my report queries.
+I created couple of views to help me with generating reports and metrics for these events. Primary reason to create these views was to simplify my report queries and to satisfy **normalisation** rules.
+
+<!-- You will see below that the views can and on itself be another table or combination of two. For example instead of creating event and location table. I can simply create an event table where I have location for event too. But that will create and attribute that does not really depends on the primary key. Location in and on itself is fundamentally different than events. -->
+
+#### All upcoming events
+
+So we needed to have details about upcoming events of particular event type and event location. And for each of those events I needed to show the organiser avg rating for the events they have organised in the past.
+
+- I started with noting down what exact attributes/columns I needed to show to accomplish this task.
+<!-- - I needed name of the event, the type, when will it happen, who is organising it, the location of the event and the avg rating of all the events that this organiser organised in the past. -->
+- Now keeping in mind that I have each students rating for an event, not the avg rating for an event nor an organiser.
+- So I needed to take multiple avg. I decided to create view based on 2 things
+    - first, can i directly use it
+    - second, can I use it again in future?
+- Based on these 2 thoughts I decided to create a view with event_id and the avg. of student rating from table registration
+
+#### Favorites summary
+List top rated events
+
+- Now I needed to show top rated events. For this I needed the avg rating(again) and how many people attended. An events rating could be high but attendance could be low or vice versa. So need both to satisfy the requirements.
+- I needed the view of Event and the location table combined. As I needed to show where these events are being organised.
+
+
+
+
+
+
+
+
+
 
 ## Table Creation
 
 You can find the sql to run [here](create.sql) and a separate markdown for table creation read [here](create.md)
 
-Or you can directly expand the section below to read.
+<!-- Or you can directly expand the section below to read.
 
 ### Create database
 
 Uncomment and use below DROP statement if you need start from the start
 ```sql
-DROP DATABASE SocialEvents;
+-- DROP DATABASE SocialEvents;
 ```
 
 ```sql
@@ -197,15 +228,15 @@ ALTER TABLE Registration ADD PRIMARY KEY (stud_id, event_id);
 ```sql
 ALTER TABLE Registration ADD CHECK (student_rating <= 5.0 AND student_rating >= 0.0);
 ```
+ -->
 
-
-- Let Students register for the events
-  - The student can only register to an event if the event is not over.
+<!-- - Let Students register for the events
+  - The student can only register to an event if the event is not over. -->
 
 <!-- INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 VALUES (NOW(), "STUD000023456", "01", (SELECT 0 FROM Event WHERE event_id = "01" AND event_date > NOW())); -->
 <!-- -- Since I do not know when will this will be checked and marked the followig query use exact datetime instead of NOW() as in above. -->
-```sql
+<!-- ```sql
 INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 VALUES (NOW(), "STUD000023457", "01", (SELECT 0 FROM Event WHERE event_id = "01" AND event_date > NOW())),
       (NOW(), "STUD000023457", "02", (SELECT 0 FROM Event WHERE event_id = "02" AND event_date > NOW())),
@@ -226,17 +257,17 @@ VALUES (NOW(), "STUD000023457", "01", (SELECT 0 FROM Event WHERE event_id = "01"
       (NOW(), "STUD000023457", "10", (SELECT 0 FROM Event WHERE event_id = "10" AND event_date > NOW())),
       (NOW(), "STUD000023457", "11", (SELECT 0 FROM Event WHERE event_id = "11" AND event_date > NOW())),
       (NOW(), "STUD000023457", "12", (SELECT 0 FROM Event WHERE event_id = "12" AND event_date > NOW()));
-```
+``` -->
 <!-- INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 VALUES ("2023-11-21 22:12:34", "STUD000023462", "07", (SELECT 0 FROM Event WHERE event_id = "07" AND event_date > "2023-11-21 22:12:34")); -->
 
-- A student can try to register after the event is over, for this following query will give error, kindly uncomment query to run.
+<!-- - A student can try to register after the event is over, for this following query will give error, kindly uncomment query to run.
 ```sql
 -- INSERT INTO Registration (student_reg_date, stud_id, event_id, student_rating)
 -- VALUES ("2023-12-30 22:12:34", "STUD000023460", "09", (SELECT 0 FROM Event WHERE event_id = "09" AND event_date > "2023-12-30 22:12:34"));
-```
+``` -->
 
-### Rate the EVENTS
+<!-- ### Rate the EVENTS
 
 - Student can only rate events for which they have registered before the event date
 
@@ -267,22 +298,20 @@ AS
         LEFT JOIN Location AS L -- this join is to get location address from location ID
         ON L.loc_id = E.event_loc;
 ```
-
+-->
 
 ## Reports
 
 You can find separate reports SQL's [here](query.sql) and a separate query document [here](query.md)
 
-OR directly expand the section below
-
-
+<!--
 - Select the correct Database
 Use SocialEvents;
 
 ### Student Report
 
 - Show the information on a student including last 10 events attended and the average of how they rated all previous events
-```
+```sql
 SELECT
     E.event_name AS "Event Name",
     E.event_date AS "Event Date",
@@ -321,9 +350,10 @@ LIMIT 10;
 ```
 
 ### What’s coming
-<!-- - IMP QU, does the rating needs to be average of event rating for the organiser, or the average of rating of the organiser by student -->
+
 - List all coming events of a certain type in a certain area. Include the average rating of all events that this organizer has created in the past.
-```
+
+```sql
 SELECT
     E.event_name AS "Event Name",
     E.event_date AS "Event Date",
@@ -361,7 +391,7 @@ ORDER BY
 ### Favourites summary
 - List top rated events that occured in last few months
 
-```
+```sql
 SELECT
     E.event_name AS "Event Name",
     E.event_type AS "Event Type",
@@ -393,4 +423,4 @@ FROM
 LEFT JOIN (SELECT * FROM AvgEventRating) AS R
 ON E.event_id=R.event_id
 ORDER BY R.event_rating DESC;
-```
+``` -->
