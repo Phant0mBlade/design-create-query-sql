@@ -4,7 +4,7 @@ This is part of my course to design, create and querying a database. It involved
 
 ## Design Choices
 
-Certain design choices I made while creating the database
+<!-- Certain design choices I made while creating the database -->
 
 We need a database where "students", can attend "events", organiser will organise "events", "events" will be organised at some "place". "students" will be registering to these events so we will require the registration details and confirmation to students.
 
@@ -12,21 +12,23 @@ We need a database where "students", can attend "events", organiser will organis
 
 Based on the details in the [problem statement](problem-statement.md) and the simplification above, the tables we will need will be,
 
+Initially I had tables like location and events combined, since I can input a location in the events section itself. But if you think that breaks the 3rd form of normalistaion.
+
+Registration was one of the relations which was important and not mentioned(asked to think about it). If a student is registering for an event, I need to store that data related to registration, the event itself, its rating, etc.
+
 1. Students - to store details of the students, so that they can register for events and get confirmation and location details of these events
-  - student name, id, email and phone. To have students register and update about events
-
-
+  - student name, id(PK), email and phone. To have students register and update about events
 2. Organiser - the details of organiser, which will create events
-  - organiser name, id, phone and email, similar to students
+  - organiser name, id(PK), phone and email, similar to students
 3. Events - actual events created
-  - event id, name, date, type, ForeignKey(organiser), ForeignKey(location)
+  - event id(PK), name, date, type, ForeignKey(organiser), ForeignKey(location)
   - Since an organiser will be organising an event and every event will have some location.
 4. Location - location of these events
-  - location id, address, zip, map link
+  - location id(PK), address, zip, map link
 5. Registration - which students have registered to which events
   - Since, each of this registration is unique corresponding to an event and the student who registered we will need a relation between them too
   - student registration date, student rating, ForeignKey(student id), ForeignKey(event id)
-  - PrimaryKey(stud id, event id) - an event is registered for by a student
+  - PK(stud id, event id) - an event is registered for by a student
 
 ### DB Contraints
 
@@ -49,11 +51,21 @@ For example
 
 These contraints will be reflected in our update statements.
 
-### What else?
 
-I created couple of views to help me with generating reports and metrics for these events. Primary reason to create these views was to simplify my report queries and to satisfy **normalisation** rules.
+### Joins and Views
 
-<!-- You will see below that the views can and on itself be another table or combination of two. For example instead of creating event and location table. I can simply create an event table where I have location for event too. But that will create and attribute that does not really depends on the primary key. Location in and on itself is fundamentally different than events. -->
+While creating this database does not require any joins, querying section did.
+
+While formulating the queries, ie, the reports section, the **order of joins** was really important. I had my left and right join done based on the which table is going to produce the least amount of data/result to compare/join to the other table.
+
+Initially I had no views but the queries I wrote where complex and honestly un-maintainable in the long term. Even reviewing them would be a chore. I decided to break these into view. But I also did not wanted to create unnecessary views too. What I did was take into account the re-usability of views too. Can I create a view which can be fundamental in nature to produce other reports too, ie, can I use the same view in complex queries?
+
+<!-- ### Indexing -->
+
+### WRT actual reports
+
+I created couple of views to help me with generating reports and metrics for these events. Primary reason to create these views was to simplify my report queries.
+
 
 #### All upcoming events
 
@@ -68,17 +80,11 @@ So we needed to have details about upcoming events of particular event type and 
 - Based on these 2 thoughts I decided to create a view with event_id and the avg. of student rating from table registration
 
 #### Favorites summary
+
 List top rated events
 
 - Now I needed to show top rated events. For this I needed the avg rating(again) and how many people attended. An events rating could be high but attendance could be low or vice versa. So need both to satisfy the requirements.
 - I needed the view of Event and the location table combined. As I needed to show where these events are being organised.
-
-
-
-
-
-
-
 
 
 
